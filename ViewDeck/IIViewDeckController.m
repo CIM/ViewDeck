@@ -3108,7 +3108,7 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
     else {
         UIBezierPath* newShadowPath = [UIBezierPath bezierPathWithRect:shadowedView.bounds];
         shadowedView.layer.masksToBounds = NO;
-        shadowedView.layer.shadowRadius = 10;
+        shadowedView.layer.shadowRadius = 0;
         shadowedView.layer.shadowOpacity = 0.5;
         shadowedView.layer.shadowColor = [[UIColor blackColor] CGColor];
         shadowedView.layer.shadowOffset = CGSizeZero;
