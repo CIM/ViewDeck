@@ -1139,7 +1139,10 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
 - (CGFloat)ledgeOffsetForSide:(IIViewDeckSide)viewDeckSide {
     switch (viewDeckSide) {
         case IIViewDeckLeftSide:
-            return self.referenceBounds.size.width - _ledge[viewDeckSide];
+//            return self.referenceBounds.size.width - _ledge[viewDeckSide];
+            // Forcing this width due to an iOS8 rotation bug within viewdeck that at the moment appears to be way
+            // too messy to fix proper. Kept original code commented above as a reference. -mm
+            return 264;
             break;
             
         case IIViewDeckRightSide:
