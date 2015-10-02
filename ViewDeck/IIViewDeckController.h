@@ -51,6 +51,7 @@
 @protocol IIViewDeckControllerDelegate;
 
 enum {
+  IIViewDeckSideUnknown = 0,
     IIViewDeckLeftSide = 1,
     IIViewDeckRightSide = 2,
     IIViewDeckTopSide = 3,

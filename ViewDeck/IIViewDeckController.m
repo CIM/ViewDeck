@@ -139,7 +139,7 @@ static const UIViewAnimationOptions DefaultSwipedAnimationCurve = UIViewAnimatio
 
 static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocity)
 {
-    NSTimeInterval animationDuration = pointsToAnimate / fabsf(velocity);
+    NSTimeInterval animationDuration = pointsToAnimate / fabs(velocity);
     // adjust duration for easing curve, if necessary
     if (DefaultSwipedAnimationCurve != UIViewAnimationOptionCurveLinear) animationDuration *= 1.25;
     return animationDuration;
@@ -827,7 +827,10 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
 
 - (BOOL)safe_shouldForwardRotationMethods {
     if ([[UIViewController class] instancesRespondToSelector:@selector(shouldAutomaticallyForwardRotationMethods)] ) { // on iOS6 or later
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         return ![self shouldAutomaticallyForwardRotationMethods];
+#pragma clang diagnostic pop
     }
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -889,9 +892,13 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
             [self centerViewHidden];
     }
     else if (_willAppearShouldArrangeViewsAfterRotation != UIDeviceOrientationUnknown) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         [self willRotateToInterfaceOrientation:self.interfaceOrientation duration:0];
         [self willAnimateRotationToInterfaceOrientation:self.interfaceOrientation duration:0];
         [self didRotateFromInterfaceOrientation:_willAppearShouldArrangeViewsAfterRotation];
+#pragma clang diagnostic pop
+
     }
     
     if ([self safe_shouldManageAppearanceMethods]) [self.centerController viewWillAppear:animated];
@@ -945,8 +952,11 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
 - (BOOL)shouldAutorotate {
     _preRotationSize = self.referenceBounds.size;
     _preRotationCenterSize = self.centerView.bounds.size;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     _willAppearShouldArrangeViewsAfterRotation = self.interfaceOrientation;
-    
+#pragma clang diagnostic pop
+
     // give other controllers a chance to act on it too
     [self relayRotationMethod:^(UIViewController *controller) {
         [controller shouldAutorotate];
@@ -955,7 +965,7 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
     return !self.centerController || [self.centerController shouldAutorotate];
 }
 
-- (NSUInteger)supportedInterfaceOrientations {
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
     if (self.centerController)
         return [self.centerController supportedInterfaceOrientations];
     
@@ -1194,7 +1204,7 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
         if (_controllers[side] == controller) return side;
     }
     
-    return NSNotFound;
+    return IIViewDeckSideUnknown;
 }
 
 
@@ -1999,7 +2009,7 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
     // Calculate steps
     for (NSUInteger t = 0; t < steps; t++) {
         time = (t / (float)steps) * duration;
-        offset = abs(expf(-zeta * wn * time) * ((Vo / wd) * sin(wd * time)));
+        offset = fabs(expf(-zeta * wn * time) * ((Vo / wd) * sin(wd * time)));
         offset = direction * [self limitOffset:offset forOrientation:IIViewDeckOffsetOrientationFromIIViewDeckSide(viewDeckSide)] + position;
         [values addObject:[NSNumber numberWithFloat:offset]];
     }
@@ -2469,7 +2479,7 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
                 // swipe to the left
                 // Animation duration based on velocity
                 CGFloat pointsToAnimate = self.slidingControllerView.frame.origin.x;
-                NSTimeInterval animationDuration = fabsf(durationToAnimate(pointsToAnimate, orientationVelocity));
+                NSTimeInterval animationDuration = fabs(durationToAnimate(pointsToAnimate, orientationVelocity));
                 
                 if (v < 0) {
                     [self openSideView:maxSide animated:YES duration:animationDuration completion:nil];
@@ -2483,7 +2493,7 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
                 // swipe to the right
                 
                 // Animation duration based on velocity
-                CGFloat pointsToAnimate = fabsf(self.leftSize - self.slidingControllerView.frame.origin.x);
+                CGFloat pointsToAnimate = fabs(self.leftSize - self.slidingControllerView.frame.origin.x);
                 NSTimeInterval animationDuration = durationToAnimate(pointsToAnimate, orientationVelocity);
                 
                 if (v > 0) {
