@@ -947,117 +947,32 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
     _viewAppeared = 0;
 }
 
-#pragma mark - Rotation IOS6
 
-- (BOOL)shouldAutorotate {
-    _preRotationSize = self.referenceBounds.size;
-    _preRotationCenterSize = self.centerView.bounds.size;
+#pragma mark - Size Transitions: Good God, man, get with the times
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+  [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+  
+  // perform pre-size change tasks
+  [self restoreShadowToSlidingView];
+  _preRotationSize = self.referenceBounds.size;
+  _preRotationCenterSize = self.centerView.bounds.size;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    _willAppearShouldArrangeViewsAfterRotation = self.interfaceOrientation;
+  _willAppearShouldArrangeViewsAfterRotation = self.interfaceOrientation;
 #pragma clang diagnostic pop
 
-    // give other controllers a chance to act on it too
-    [self relayRotationMethod:^(UIViewController *controller) {
-        [controller shouldAutorotate];
-    }];
-
-    return !self.centerController || [self.centerController shouldAutorotate];
-}
-
-- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
-    if (self.centerController)
-        return [self.centerController supportedInterfaceOrientations];
+  [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext>  _Nonnull context) {
+    // perform during-size change tasks
     
-    return [super supportedInterfaceOrientations];
-}
-
-- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
-    if (self.centerController)
-        return [self.centerController preferredInterfaceOrientationForPresentation];
-    
-    return [super preferredInterfaceOrientationForPresentation];
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    _preRotationSize = self.referenceBounds.size;
-    _preRotationCenterSize = self.centerView.bounds.size;
-    _preRotationIsLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-    _willAppearShouldArrangeViewsAfterRotation = interfaceOrientation;
-    
-    // give other controllers a chance to act on it too
-    [self relayRotationMethod:^(UIViewController *controller) {
-        [controller shouldAutorotateToInterfaceOrientation:interfaceOrientation];
-    }];
-
-    return !self.centerController || [self.centerController shouldAutorotateToInterfaceOrientation:interfaceOrientation];
-}
-
-- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
-    [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
-    [self arrangeViewsAfterRotation];
-    
-    [self relayRotationMethod:^(UIViewController *controller) {
-        [controller willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
-    }];
-
-    CABasicAnimation* anim = nil;
-    // only animate shadow if we've applied it ourselves.
-    if ([self.delegate respondsToSelector:@selector(viewDeckController:applyShadow:withBounds:)]) {
-        for (NSString* key in self.slidingControllerView.layer.animationKeys) {
-            if ([key isEqualToString:@"bounds"]) {
-                CABasicAnimation* other = (CABasicAnimation*)[self.slidingControllerView.layer animationForKey:key];
-                
-                if ([other isKindOfClass:[CABasicAnimation class]]) {
-                    anim = [CABasicAnimation animationWithKeyPath:@"shadowPath"];
-                    anim.fromValue = (__bridge id)[UIBezierPath bezierPathWithRect:[other.fromValue CGRectValue]].CGPath;
-                    anim.duration = other.duration;
-                    anim.timingFunction = other.timingFunction;
-                    break;
-                }
-            }
-        }
-    }
-    
-    // fallback: make shadow transparent and fade in to desired value. This gives the same visual
-    // effect as animating 
-    if (!anim) {
-        anim = [CABasicAnimation animationWithKeyPath:@"shadowOpacity"];
-        anim.fromValue = @(0.0);
-        anim.duration = 1;
-        anim.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-    }
-    [self.slidingControllerView.layer addAnimation:anim forKey:@"shadowOpacity"];
-
-}
-
-
-- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
-    [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
-    [self restoreShadowToSlidingView];
-    
-    if (_preRotationSize.width == 0) {
-        _preRotationSize = self.referenceBounds.size;
-        _preRotationCenterSize = self.centerView.bounds.size;
-        _preRotationIsLandscape = UIInterfaceOrientationIsLandscape(self.interfaceOrientation);
-    }
-    
-    [self relayRotationMethod:^(UIViewController *controller) {
-        [controller willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
-    }];
-}
-
-- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
-    [super didRotateFromInterfaceOrientation:fromInterfaceOrientation];
+  } completion:^(id<UIViewControllerTransitionCoordinatorContext>  _Nonnull context) {
+    // perform post-size change tasks
     [self applyShadowToSlidingViewAnimated:YES];
-    
-    [self relayRotationMethod:^(UIViewController *controller) {
-        [controller didRotateFromInterfaceOrientation:fromInterfaceOrientation];
-    }];
-    
-    [self setAccessibilityForCenterTapper]; // update since the frame and the frame's intersection with the window will have changed
+    [self arrangeViewsAfterRotation];
+    [self setAccessibilityForCenterTapper];
+  }];
 }
+
 
 - (void)arrangeViewsAfterRotation {
     _willAppearShouldArrangeViewsAfterRotation = (UIInterfaceOrientation)UIDeviceOrientationUnknown;
